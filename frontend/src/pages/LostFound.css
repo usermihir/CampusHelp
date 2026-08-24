@@ -1,0 +1,565 @@
+/* LostFound.css - Highly polished vintage handcrafted UI */
+
+.lf-vintage-wrapper {
+    background-color: #f1ebd9; /* Antique parchment background */
+    background-image: 
+        radial-gradient(rgba(100, 80, 60, 0.08) 1px, transparent 1px),
+        radial-gradient(rgba(100, 80, 60, 0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+    background-attachment: fixed;
+    color: #433324; /* Dark espresso brown */
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 4rem;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.lf-vintage-wrapper::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 100px rgba(100, 80, 60, 0.1);
+    z-index: 0;
+}
+
+/* --- Typography --- */
+.font-serif {
+    font-family: 'Cormorant Garamond', serif;
+}
+.font-hand {
+    font-family: 'Dancing Script', 'Caveat', cursive; /* Optional fallback */
+    font-style: italic;
+}
+
+/* --- Decorative Elements --- */
+.vintage-ornament {
+    color: #a89178;
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+}
+.vintage-ornament::before, .vintage-ornament::after {
+    content: '';
+    height: 1px;
+    width: 30px;
+    background: #a89178;
+    margin: auto 10px;
+}
+
+.bg-decoration-bottom-right {
+    position: fixed;
+    bottom: -20px;
+    right: -20px;
+    width: 250px;
+    height: 250px;
+    background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M20,80 L20,30 Q20,20 30,20 L70,20 Q80,20 80,30 L80,80" fill="none" stroke="%238a7863" stroke-width="1"/><rect x="25" y="40" width="50" height="30" fill="none" stroke="%238a7863" stroke-width="1"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* --- Navbar --- */
+.lf-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 3rem;
+    border-bottom: 1px solid rgba(138, 120, 99, 0.3);
+    position: relative;
+    z-index: 10;
+}
+
+.lf-nav-brand {
+    display: flex;
+    flex-direction: column;
+}
+
+.lf-brand-top {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.lf-brand-title {
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: #2b1f16;
+}
+
+.lf-brand-subtitle {
+    font-size: 0.9rem;
+    color: #5c4a3d;
+    margin-left: 2.25rem;
+    letter-spacing: 0.5px;
+}
+
+.lf-tagline {
+    position: absolute;
+    left: 230px;
+    top: 25px;
+    font-size: 1.1rem;
+    color: #8c4c3e;
+    transform: rotate(-3deg);
+    opacity: 0.8;
+}
+
+.lf-nav-links {
+    display: flex;
+    gap: 3rem;
+}
+
+.lf-nav-links a {
+    text-decoration: none;
+    color: #433324;
+    font-size: 1.05rem;
+    position: relative;
+    padding-bottom: 4px;
+}
+
+.lf-nav-links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: -10%;
+    width: 120%;
+    height: 3px;
+    background-image: url('data:image/svg+xml;utf8,<svg preserveAspectRatio="none" viewBox="0 0 100 10" xmlns="http://www.w3.org/2000/svg"><path d="M0 5 Q 50 0 100 5" stroke="%238c4c3e" stroke-width="2" fill="none"/></svg>');
+}
+
+.lf-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.lf-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #dce2d3;
+    border: 1px solid #7d856d;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    color: #433324;
+}
+
+/* --- Main Layout --- */
+.lf-main-container {
+    max-width: 1300px;
+    margin: 3rem auto;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: 450px 1fr;
+    gap: 4rem;
+    position: relative;
+    z-index: 10;
+}
+
+/* --- Report Form Sheet --- */
+.lf-report-sheet {
+    background-color: #f8f4e6;
+    padding: 2.5rem;
+    position: relative;
+    box-shadow: 
+        2px 2px 10px rgba(0,0,0,0.05),
+        10px 10px 0px rgba(220, 210, 190, 0.4);
+}
+
+.lf-report-sheet::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 8px; right: 8px; bottom: 8px;
+    border: 1px solid rgba(138, 120, 99, 0.4);
+    pointer-events: none;
+}
+
+.lf-report-sheet::after {
+    content: '';
+    position: absolute;
+    top: 12px; left: 12px; right: 12px; bottom: 12px;
+    border: 1px solid rgba(138, 120, 99, 0.2);
+    pointer-events: none;
+}
+
+.sheet-corner-decoration {
+    position: absolute;
+    top: -15px; left: -15px;
+    color: #6d755c;
+    opacity: 0.7;
+    transform: rotate(-15deg);
+}
+
+.lf-report-sheet h2 {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: #2b1f16;
+}
+
+/* Form Inputs */
+.lf-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.lf-form-group label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #5c4a3d;
+    margin-bottom: 0.5rem;
+}
+
+.lf-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+}
+
+.lf-input-icon {
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    color: #a89178;
+    pointer-events: none;
+}
+
+.lf-input {
+    width: 100%;
+    background-color: transparent;
+    border: 1px solid rgba(138, 120, 99, 0.4);
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    color: #2b1f16;
+    transition: all 0.2s;
+    border-radius: 1px;
+}
+
+.lf-input:focus {
+    outline: none;
+    border-color: #8c4c3e;
+    background-color: rgba(255,255,255,0.3);
+}
+
+.lf-input::placeholder {
+    color: #b09f8e;
+    font-family: var(--font-serif);
+    font-style: italic;
+}
+
+textarea.lf-input {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* File Upload specific */
+.lf-file-upload-wrapper {
+    position: relative;
+    width: 100%;
+    border: 1px solid rgba(138, 120, 99, 0.4);
+    display: flex;
+    align-items: center;
+    background-color: transparent;
+    border-radius: 1px;
+}
+
+.lf-file-upload-wrapper .lf-input-icon {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lf-file-upload-btn {
+    background-color: #e5dfcb;
+    border: none;
+    border-right: 1px solid rgba(138, 120, 99, 0.4);
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #5c4a3d;
+    cursor: pointer;
+}
+
+.lf-file-upload-text {
+    padding-left: 1rem;
+    font-size: 0.85rem;
+    color: #b09f8e;
+    font-family: var(--font-serif);
+    font-style: italic;
+}
+
+.lf-file-input-hidden {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+}
+
+/* Submit Button */
+.lf-submit-btn {
+    width: 100%;
+    background-color: #a85443; /* Terracotta/rust */
+    color: #f8f4e6;
+    border: 2px solid #8c4c3e;
+    padding: 1rem;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    margin-top: 2rem;
+    box-shadow: 2px 2px 0 rgba(140, 76, 62, 0.3);
+    border-radius: 2px;
+    transition: all 0.1s;
+    background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.1"/></svg>');
+}
+
+.lf-submit-btn:hover:not(:disabled) {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 rgba(140, 76, 62, 0.3);
+}
+.lf-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* --- Matches Dashboard --- */
+.lf-matches-section h2 {
+    font-size: 2rem;
+    color: #2b1f16;
+    margin-bottom: 2rem;
+    position: relative;
+    display: inline-block;
+}
+
+.lf-matches-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background-image: url('data:image/svg+xml;utf8,<svg preserveAspectRatio="none" viewBox="0 0 100 10" xmlns="http://www.w3.org/2000/svg"><path d="M0 5 Q 50 0 100 5" stroke="%23a85443" stroke-width="2" stroke-linecap="round" fill="none"/></svg>');
+}
+
+.compass-decoration {
+    position: absolute;
+    top: 0; right: 2rem;
+    color: #a89178;
+    opacity: 0.5;
+}
+
+.lf-matches-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.lf-view-all-btn {
+    background: transparent;
+    border: none;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: #5c4a3d;
+    cursor: pointer;
+    padding-bottom: 2px;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.lf-view-all-btn:hover {
+    border-bottom: 1px solid #5c4a3d;
+}
+
+/* Match Card */
+.lf-match-card {
+    background-color: #fbf8f1;
+    border: 1px solid rgba(138, 120, 99, 0.3);
+    padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+    position: relative;
+    box-shadow: 1px 1px 5px rgba(0,0,0,0.03);
+}
+
+.lf-match-card::before {
+    content: '';
+    position: absolute;
+    top: 4px; left: 4px; right: 4px; bottom: 4px;
+    border: 1px solid rgba(138, 120, 99, 0.15);
+    pointer-events: none;
+}
+
+/* Corner marks */
+.lf-match-card::after {
+    content: '✧';
+    position: absolute;
+    bottom: 4px; left: 6px;
+    color: #c4b6a6;
+    font-size: 0.7rem;
+}
+
+/* Status Stamp */
+.lf-stamp {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    padding: 0.3rem 1rem;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    color: #fff;
+    transform: rotate(-2deg);
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    z-index: 2;
+    background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/></svg>');
+}
+
+.lf-stamp.proposed { background-color: #a85443; } /* Terracotta */
+.lf-stamp.confirmed { background-color: #8c9675; } /* Muted olive */
+
+/* Card Content Header (Image & Score) */
+.lf-match-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed rgba(138, 120, 99, 0.3);
+}
+
+.lf-item-image-placeholder {
+    width: 60px;
+    height: 80px;
+    background-color: #e5dfcb;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #a89178;
+}
+
+.lf-score-container {
+    text-align: right;
+}
+
+.lf-score-label {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    color: #5c4a3d;
+}
+
+.lf-score-value {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    color: #a85443;
+    font-weight: 600;
+}
+
+/* Card Details */
+.lf-match-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: #433324;
+}
+
+.lf-detail-icon {
+    color: #8c7a66;
+}
+
+/* Confirm Button */
+.lf-confirm-btn {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 0.75rem;
+    border: none;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+}
+
+.lf-confirm-btn.proposed-action {
+    background-color: #453026; /* Dark brown */
+    color: #f8f4e6;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+.lf-confirm-btn.proposed-action:hover {
+    background-color: #312119;
+}
+
+.lf-confirm-btn.confirmed-action {
+    background-color: #e3e6da;
+    color: #636b4f;
+    border: 1px solid #c0c6b0;
+    cursor: default;
+}
+
+/* Explanation Note */
+.lf-explanation-note {
+    margin-top: 3rem;
+    font-family: 'Dancing Script', 'Caveat', var(--font-serif);
+    font-style: italic;
+    font-size: 1.3rem;
+    color: #5c4a3d;
+    max-width: 400px;
+    line-height: 1.4;
+    position: relative;
+}
+
+.lf-explanation-note::after {
+    content: '🍃';
+    position: absolute;
+    right: -20px;
+    bottom: 0;
+    font-size: 1rem;
+    opacity: 0.6;
+}
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+    .lf-main-container {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+    .lf-nav-links {
+        display: none;
+    }
+}
+@media (max-width: 600px) {
+    .lf-report-sheet {
+        padding: 1.5rem;
+    }
+    .lf-navbar {
+        padding: 1rem;
+    }
+    .lf-tagline {
+        display: none;
+    }
+}

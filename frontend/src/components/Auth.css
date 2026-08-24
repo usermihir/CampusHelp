@@ -1,0 +1,385 @@
+/* Auth.css - Vintage Handcrafted Aesthetic */
+
+.vintage-auth-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #eaddcf; /* Muted parchment background */
+    background-image: 
+        radial-gradient(circle at center, transparent 0%, rgba(139, 115, 85, 0.1) 100%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+    padding: 2rem;
+    font-family: 'Inter', sans-serif;
+    color: #4a3b32; /* Deep brown */
+}
+
+.vintage-auth-container {
+    display: flex;
+    width: 100%;
+    max-width: 1100px;
+    min-height: 650px;
+    background: #fdfaf6; /* Warm cream */
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 
+        0 20px 40px rgba(74, 59, 50, 0.15),
+        0 1px 3px rgba(74, 59, 50, 0.1),
+        inset 0 0 0 1px rgba(139, 115, 85, 0.2); /* Thin hand-drawn-like border */
+    position: relative;
+}
+
+.vintage-auth-container::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 8px; right: 8px; bottom: 8px;
+    border: 1px solid rgba(139, 115, 85, 0.15);
+    pointer-events: none;
+    border-radius: 2px;
+}
+
+/* --- Left Side: Illustration --- */
+.auth-illustration-side {
+    flex: 0 0 55%;
+    position: relative;
+    background: #f4eee6;
+    border-right: 1px solid rgba(139, 115, 85, 0.2);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.vintage-illustration {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    animation: fadeIn 1.5s ease-out forwards;
+    filter: sepia(0.2) contrast(0.9) brightness(0.95);
+}
+
+.illustration-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, rgba(253, 250, 246, 0) 70%, rgba(253, 250, 246, 1) 100%);
+    pointer-events: none;
+}
+
+/* --- Right Side: Form --- */
+.auth-form-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem 4rem;
+    background: #fdfaf6;
+    position: relative;
+}
+
+.auth-form-content {
+    max-width: 360px;
+    margin: 0 auto;
+    width: 100%;
+    animation: slideUp 0.8s ease-out forwards;
+}
+
+.auth-brand {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    color: #8c7355;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.auth-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #3e2723;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+}
+
+.auth-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    font-style: italic;
+    color: #795548;
+    margin-bottom: 1.5rem;
+}
+
+.ornamental-divider {
+    height: 1px;
+    width: 60%;
+    margin: 0 auto;
+    background: linear-gradient(90deg, transparent, rgba(139, 115, 85, 0.4), transparent);
+    position: relative;
+}
+
+.ornamental-divider::after {
+    content: '✧';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fdfaf6;
+    padding: 0 10px;
+    color: #a1887f;
+    font-size: 0.8rem;
+}
+
+/* --- Form Elements --- */
+.vintage-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.vintage-form label {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8d6e63;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 12px;
+    color: #a1887f;
+    pointer-events: none;
+}
+
+.vintage-form input[type="email"],
+.vintage-form input[type="password"],
+.vintage-form input[type="text"] {
+    width: 100%;
+    background: #fffbfa;
+    border: 1px solid #d7ccc8;
+    border-radius: 2px;
+    padding: 0.875rem 1rem 0.875rem 2.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: #4e342e;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(139, 115, 85, 0.02);
+}
+
+.vintage-form input:focus {
+    outline: none;
+    border-color: #8d6e63;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(141, 110, 99, 0.1);
+}
+
+.vintage-form input::placeholder {
+    color: #bcaaa4;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #a1887f;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    display: flex;
+}
+
+.password-toggle:hover {
+    color: #6d4c41;
+    background: none;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    font-size: 0.85rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: #795548;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    font-weight: 400 !important;
+}
+
+.checkbox-label input {
+    margin-right: 0.5rem;
+    accent-color: #8d6e63;
+}
+
+.forgot-password {
+    color: #795548;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.forgot-password:hover {
+    border-bottom-color: #795548;
+}
+
+/* --- Buttons --- */
+.vintage-btn-primary {
+    width: 100%;
+    background-color: #bfa58a; /* Muted terracotta/mustard blend */
+    color: #ffffff;
+    border: 1px solid #a68c71;
+    border-radius: 2px;
+    padding: 1rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(139, 115, 85, 0.15);
+    text-transform: uppercase;
+}
+
+.vintage-btn-primary:hover:not(:disabled) {
+    background-color: #a68c71;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(139, 115, 85, 0.2);
+}
+
+.vintage-btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.auth-footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #795548;
+}
+
+.toggle-auth-btn {
+    background: none;
+    border: none;
+    color: #5d4037;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    display: inline;
+    text-decoration: underline;
+    text-decoration-color: rgba(93, 64, 55, 0.3);
+    text-underline-offset: 4px;
+    transition: all 0.2s;
+}
+
+.toggle-auth-btn:hover {
+    text-decoration-color: #5d4037;
+    background: none;
+}
+
+/* --- Animations --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(1.05); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+    .vintage-auth-container {
+        flex-direction: column;
+    }
+    
+    .auth-illustration-side {
+        flex: 0 0 200px;
+        border-right: none;
+        border-bottom: 1px solid rgba(139, 115, 85, 0.2);
+    }
+    
+    .illustration-overlay {
+        background: linear-gradient(180deg, rgba(253, 250, 246, 0) 50%, rgba(253, 250, 246, 1) 100%);
+    }
+    
+    .auth-form-side {
+        padding: 2rem;
+    }
+}
+
+/* ── Step indicator ──────────────────────────────────────────── */
+.auth-step-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+.auth-step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d4c5b8;
+    transition: background 0.3s, transform 0.3s;
+}
+.auth-step-dot.active {
+    background: #7c4f2f;
+    transform: scale(1.3);
+}
+.auth-step-dot.done {
+    background: #a47c5b;
+}
+
+/* ── Hall dropdown (Step 3) ──────────────────────────────────── */
+.input-wrapper--select {
+    align-items: center;
+}
+.auth-hall-select {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.92rem;
+    color: #4a3b32;
+    cursor: pointer;
+    padding: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+}
+.auth-hall-select option {
+    font-size: 0.88rem;
+    color: #3d2c1e;
+}
+.auth-hall-loading {
+    font-size: 0.85rem;
+    color: #a89080;
+    font-style: italic;
+}
+.auth-hall-hint {
+    font-size: 0.76rem;
+    color: #a89080;
+    margin: 0.5rem 0 0;
+    font-style: italic;
+    line-height: 1.4;
+}

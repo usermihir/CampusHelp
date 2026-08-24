@@ -1,0 +1,233 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg-parchment: #F4F1EA;
+  --bg-parchment-light: #F9F8F4;
+  --bg-parchment-dark: #E8E3D8;
+  
+  --text-primary: #3A2E28; /* Deep espresso brown */
+  --text-secondary: #5D4F46;
+  
+  --accent-olive: #687053;
+  --accent-terracotta: #A65A4B;
+  --accent-burgundy: #732F2F;
+  --accent-mustard: #C4A15A;
+  
+  --border-ink: rgba(58, 46, 40, 0.2);
+  --border-ink-dark: rgba(58, 46, 40, 0.4);
+  
+  --font-serif: 'Cormorant Garamond', 'Playfair Display', serif;
+  --font-sans: 'Inter', 'DM Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-parchment);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  
+  /* Subtle paper texture effect */
+  background-image: 
+      radial-gradient(var(--border-ink) 0.5px, transparent 0.5px),
+      radial-gradient(var(--border-ink) 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  background-attachment: fixed;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-parchment);
+  opacity: 0.96;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+/* Forms & Cards */
+.card {
+  background-color: var(--bg-parchment-light);
+  border-radius: 2px;
+  padding: 2rem;
+  border: 1px solid var(--border-ink);
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-parchment);
+  border: 1px solid var(--border-ink);
+  border-radius: 2px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--text-primary);
+  box-shadow: 2px 2px 0px var(--border-ink-dark);
+  background-color: #fff;
+}
+
+input::placeholder, textarea::placeholder {
+    color: var(--border-ink-dark);
+}
+
+button {
+  background-color: var(--text-primary);
+  color: var(--bg-parchment);
+  border: 1px solid var(--text-primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 2px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 2px 2px 0px var(--border-ink-dark);
+}
+
+button:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px var(--border-ink-dark);
+}
+
+button:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--border-ink-dark);
+}
+
+button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--text-primary);
+    box-shadow: none;
+}
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--border-ink);
+    box-shadow: none;
+}
+
+/* Dashboard Layout */
+.app-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Match Cards */
+.match-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed var(--border-ink);
+  padding-bottom: 0.75rem;
+}
+
+.badge {
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid;
+}
+
+.badge-lost {
+  color: var(--accent-terracotta);
+  border-color: var(--accent-terracotta);
+}
+
+.badge-found {
+  color: var(--accent-olive);
+  border-color: var(--accent-olive);
+}
+
+.match-details p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.match-details strong {
+  color: var(--text-primary);
+}
+
+.match-score {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent-mustard);
+  margin-top: 0.5rem;
+  font-family: var(--font-serif);
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+}

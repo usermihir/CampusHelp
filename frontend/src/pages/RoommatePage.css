@@ -1,0 +1,233 @@
+/* RoommatePage.css - Specific styles for the Roommate layout */
+
+.rm-form {
+    max-width: 1150px;
+    margin: 0 auto;
+    padding: 3rem;
+    background-color: var(--bg-parchment-light);
+    border: 1px solid var(--border-ink);
+    border-radius: 6px;
+    box-shadow: 2px 2px 0px var(--border-ink-dark);
+}
+
+.rm-form-header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+}
+
+.rm-form-header h2 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.rm-form-header p {
+    font-style: italic;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.rm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    margin-bottom: 2rem;
+}
+
+.rm-col-header {
+    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-align: center;
+    margin-bottom: 2.5rem;
+    border-bottom: 2px solid var(--border-ink);
+    padding-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.rm-slider-wrapper {
+    margin-bottom: 32px;
+    height: 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.rm-slider-title {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: block;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+}
+
+.rm-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.rm-slider-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rm-slider-label.left {
+    text-align: right;
+}
+
+.rm-slider-label.right {
+    text-align: left;
+}
+
+.rm-slider {
+    flex: 1;
+    /* Keeping browser default for blue sliders, but ensuring consistent sizing */
+    height: 4px;
+    cursor: pointer;
+}
+
+.rm-slider:focus {
+    outline: 2px solid rgba(0, 120, 215, 0.5); /* Blue focus ring */
+    outline-offset: 4px;
+}
+
+.rm-checkbox-section {
+    border-top: 1px solid var(--border-ink);
+    padding-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.rm-checkbox-section-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+}
+
+.rm-checkbox-row {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+}
+
+.rm-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.rm-checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.rm-notes-section {
+    margin-bottom: 24px;
+}
+
+.rm-notes-label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.rm-notes-textarea {
+    width: 100%;
+    height: 110px;
+    padding: 1rem;
+    border: 1px solid var(--border-ink);
+    background-color: var(--bg-parchment);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    resize: vertical;
+    border-radius: 4px;
+    color: var(--text-primary);
+    transition: border-color 0.2s;
+}
+
+.rm-notes-textarea::placeholder {
+    color: var(--border-ink-dark);
+}
+
+.rm-notes-textarea:focus {
+    outline: none;
+    border-color: var(--text-primary);
+}
+
+.rm-submit-btn {
+    width: 100%;
+    height: 56px;
+    background-color: var(--text-primary);
+    color: var(--bg-parchment);
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.rm-submit-btn:hover {
+    background-color: #2a201b;
+    transform: translateY(-1px);
+}
+
+.rm-submit-btn:active {
+    transform: translateY(1px);
+}
+
+.rm-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .rm-form {
+        padding: 2rem;
+    }
+    .rm-grid {
+        gap: 2rem;
+    }
+    .rm-checkbox-row {
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .rm-grid {
+        grid-template-columns: 1fr;
+    }
+    .rm-checkbox-row {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    .rm-slider-label {
+        width: 80px;
+        font-size: 0.8rem;
+    }
+}

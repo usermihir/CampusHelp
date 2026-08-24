@@ -1,0 +1,195 @@
+/* MapPage.css */
+
+.map-error-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #fff5f5;
+    border: 1px solid var(--accent-terracotta);
+    color: var(--accent-terracotta);
+    padding: 0.6rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.map-retry-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--accent-terracotta);
+    color: var(--accent-terracotta);
+    border-radius: 3px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.map-retry-btn:hover {
+    background-color: var(--accent-terracotta);
+    color: white;
+}
+
+.map-sidebar {
+    width: 350px;
+    background-color: var(--bg-parchment);
+    border-right: 1px solid var(--border-ink);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    overflow-y: auto;
+    z-index: 2;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+}
+
+.map-sidebar-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px dashed var(--border-ink);
+    padding-bottom: 1rem;
+}
+
+.map-sidebar-header h2 {
+    font-size: 1.8rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.map-sidebar-header p {
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
+.map-search-wrapper {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.map-search-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--bg-parchment-light);
+    border: 1px solid var(--border-ink);
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+}
+
+.map-search-input input {
+    border: none;
+    background: transparent;
+    flex: 1;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.map-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--bg-parchment-light);
+    border: 1px solid var(--border-ink);
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.map-search-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px dashed var(--border-ink-dark);
+}
+
+.map-search-item:last-child {
+    border-bottom: none;
+}
+
+.map-search-item:hover {
+    background-color: var(--bg-parchment-dark);
+}
+
+.map-search-short {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.map-selected-card {
+    background-color: var(--bg-parchment-light);
+    border: 1px solid var(--border-ink);
+    padding: 1.5rem;
+    box-shadow: 2px 2px 0 var(--border-ink-dark);
+}
+
+.map-selected-cat {
+    font-size: 0.7rem;
+    color: var(--accent-terracotta);
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.map-distance {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--bg-parchment-dark);
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    margin-top: 1rem;
+    border: 1px solid var(--border-ink-dark);
+}
+
+.map-empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    background-color: var(--bg-parchment-light);
+    border: 1px dashed var(--border-ink);
+}
+
+/* Map Markers */
+.map-marker {
+    color: var(--accent-terracotta);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.map-marker:hover {
+    transform: scale(1.1);
+    color: var(--accent-burgundy);
+}
+
+.map-marker.selected {
+    color: var(--accent-burgundy);
+    animation: bounce 1s infinite alternate;
+}
+
+@keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-5px); }
+}
+
+@media (max-width: 768px) {
+    .map-container {
+        flex-direction: column !important;
+    }
+    
+    .map-sidebar {
+        width: 100%;
+        max-height: 40vh;
+        border-right: none;
+        border-bottom: 2px solid var(--border-ink);
+    }
+}
