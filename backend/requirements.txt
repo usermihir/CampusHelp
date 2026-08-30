@@ -16,3 +16,4 @@ pgvector
 celery
 redis
 GeoAlchemy2
+jwt
