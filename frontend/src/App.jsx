@@ -32,7 +32,8 @@ function App() {
 
   const fetchUserProfile = async (token) => {
     try {
-      const res = await fetch('http://localhost:8000/api/users/me', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      const res = await fetch(`${API_URL}/users/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {

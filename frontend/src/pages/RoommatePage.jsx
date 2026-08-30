@@ -4,7 +4,7 @@ import { Compass, ChevronLeft, User, Users, Search, RefreshCw, Info } from 'luci
 import '../components/Home.css';
 import './RoommatePage.css';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const RoommatePage = () => {
     const navigate = useNavigate();

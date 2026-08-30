@@ -3,7 +3,8 @@
  * API wrapper for the Society Channel feature.
  */
 
-const API = 'http://localhost:8000/api';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
 
 function authHeaders() {
   const token = localStorage.getItem('kgp_auth_token');
@@ -76,6 +77,6 @@ export const getMessages = (channelId, { beforeId, limit = 50 } = {}) => {
 export const createChannelSocket = (channelId) => {
   const token = localStorage.getItem('kgp_auth_token');
   return new WebSocket(
-    `ws://localhost:8000/ws/channels/${channelId}?token=${encodeURIComponent(token)}`
+    `${WS_BASE}/channels/${channelId}?token=${encodeURIComponent(token)}`
   );
 };
