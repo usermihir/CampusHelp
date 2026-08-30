@@ -104,12 +104,54 @@ async def signup_complete(payload: SignupCompleteRequest, db: AsyncSession = Dep
     if existing.scalars().first():
         raise HTTPException(status_code=400, detail="Account already exists.")
 
-    # 3. Create user in Supabase
+    # 3. Create user in Supabase (handle race: user may already exist in Supabase but not local DB)
+    sb_user = None
     try:
         sb_user = admin_create_user(payload.email, payload.password)
     except Exception as e:
-        logger.error(f"Failed to create Supabase user: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create account")
+        err_str = str(e)
+        # Supabase returns 422 with error_code "email_exists" if the auth user already exists
+        # but our local DB doesn't have them yet (e.g. a previous signup crashed after Supabase
+        # but before the local db.commit()). Recover by fetching the existing Supabase user.
+        if "email_exists" in err_str or "422" in err_str:
+            logger.warning(f"Supabase user already exists for {payload.email}, recovering...")
+            try:
+                from app.supabase_client import _get_settings, SUPABASE_URL, SUPABASE_KEY
+                import httpx
+                _get_settings()
+                # Re-read module-level globals after _get_settings() call
+                from app.supabase_client import SUPABASE_URL as SB_URL, SUPABASE_KEY as SB_KEY
+                headers = {
+                    "apikey": SB_KEY,
+                    "Authorization": f"Bearer {SB_KEY}",
+                }
+                # Update the password so the user can actually log in with what they just chose
+                # First, list all users and find by email
+                with httpx.Client() as client:
+                    list_resp = client.get(f"{SB_URL}/auth/v1/admin/users", headers=headers)
+                    if list_resp.status_code != 200:
+                        raise Exception("Could not list Supabase users")
+                    users = list_resp.json().get("users", [])
+                    target = next((u for u in users if u.get("email") == payload.email), None)
+                    if not target:
+                        raise Exception("Could not locate existing Supabase user")
+                    uid = target["id"]
+                    # Update their password to what they just set
+                    update_headers = {**headers, "Content-Type": "application/json"}
+                    upd_resp = client.put(
+                        f"{SB_URL}/auth/v1/admin/users/{uid}",
+                        headers=update_headers,
+                        json={"password": payload.password},
+                    )
+                    if upd_resp.status_code != 200:
+                        raise Exception(f"Could not update existing Supabase user password ({upd_resp.status_code})")
+                    sb_user = target
+            except Exception as recover_err:
+                logger.error(f"Recovery from email_exists failed: {recover_err}")
+                raise HTTPException(status_code=500, detail="Failed to create account. Please try logging in instead.")
+        else:
+            logger.error(f"Failed to create Supabase user: {e}")
+            raise HTTPException(status_code=500, detail="Failed to create account")
         
     # 4. Insert into local DB
     user_id = UUID(sb_user["id"])
@@ -128,6 +170,7 @@ async def signup_complete(payload: SignupCompleteRequest, db: AsyncSession = Dep
         return {"message": "Account created successfully.", "access_token": session["access_token"]}
     except Exception:
         return {"message": "Account created. Please log in."}
+
 
 # -----------------------------------------------------------------------------
 # LOGIN FLOW

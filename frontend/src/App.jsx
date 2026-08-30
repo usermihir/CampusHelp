@@ -10,6 +10,10 @@ import RoommatePage from './pages/RoommatePage';
 import MapPage from './pages/MapPage';
 import MaintenancePage from './pages/MaintenancePage';
 import MaintenanceAdminPage from './pages/MaintenanceAdminPage';
+import HackathonsPage from './pages/HackathonsPage';
+import SocietiesPage from './pages/SocietiesPage';
+import SocietyDetailPage from './pages/SocietyDetailPage';
+import ChannelPage from './pages/ChannelPage';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -139,7 +143,12 @@ const RoleSelector = ({ roles, onLogout }) => {
         <Route path="/student/roommate" element={<RoommatePage />} />
         <Route path="/student/map" element={<MapPage />} />
         <Route path="/student/maintenance" element={<MaintenancePage />} />
+        <Route path="/student/hackathons" element={<HackathonsPage />} />
+        <Route path="/student/societies" element={<SocietiesPage />} />
+        <Route path="/student/societies/:id" element={<SocietyDetailPage />} />
+        <Route path="/student/channels/:id" element={<ChannelPage />} />
         
+
         {/* Route root to the correct dashboard */}
         <Route path="/" element={
           userProfile.roles.length > 1 

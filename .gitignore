@@ -26,3 +26,8 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Ignore all markdown files in root
+/*.md
+# Except the README
+!README.md

@@ -926,32 +926,47 @@ h1, h2, h3, h4, h5, h6 {
 
 .hackathon-card {
     border: 1px solid var(--border-ink);
-    padding: 2rem;
+    padding: 1rem 1.25rem;
     background-color: var(--bg-parchment-light);
+    transition: box-shadow 0.2s, transform 0.15s;
+    border-radius: 4px;
+}
+
+.hackathon-card:hover {
+    box-shadow: 0 4px 12px rgba(58,46,40,0.1);
+    transform: translateY(-1px);
 }
 
 .hackathon-card h4 {
     font-family: var(--font-sans);
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.05rem;
+    margin-bottom: 0.4rem;
+    line-height: 1.35;
 }
 
 .hack-meta {
     font-family: var(--font-serif);
     color: var(--text-secondary);
-    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
 }
 
 .hack-tags {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .hack-tags span {
     font-size: 0.75rem;
     background-color: var(--border-ink);
     padding: 0.2rem 0.5rem;
+    border-radius: 2px;
 }
+
 
 /* Societies */
 .society-grid {

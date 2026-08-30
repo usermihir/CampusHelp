@@ -1,15 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Search, Bell, Menu, Compass, BookOpen, 
     Home as HomeIcon, Map as MapIcon, Calendar, 
     MessageSquare, Package, ChevronRight, User,
-    Wrench, ShieldAlert, Star
+    Wrench, ShieldAlert, Star, Globe, MapPin, ExternalLink, Trophy
 } from 'lucide-react';
+import { fetchHackathons, getPlatformColor, getPlatformLabel, formatDate, daysUntil } from '../services/hackathonsService';
 import './Home.css';
 
 const Home = ({ onLogout }) => {
     const navigate = useNavigate();
+
+    // Live hackathon preview (top 3)
+    const [previewHacks, setPreviewHacks] = useState([]);
+    const [hacksLoading, setHacksLoading] = useState(true);
+
+    useEffect(() => {
+        fetchHackathons()
+            .then(({ data }) => setPreviewHacks((data ?? []).slice(0, 3)))
+            .catch(() => {})
+            .finally(() => setHacksLoading(false));
+    }, []);
 
     return (
         <div className="vintage-home-wrapper">
@@ -27,7 +39,8 @@ const Home = ({ onLogout }) => {
                         <a href="#maintenance" onClick={(e) => { e.preventDefault(); navigate('/student/maintenance'); }}>Maintenance</a>
                         <a href="#reviews">Reviews</a>
                         <button onClick={() => navigate('/student/map')} className="nav-btn">Campus Map</button>
-                        <a href="#events">Events</a>
+                        <button onClick={() => navigate('/student/societies')} className="nav-btn">Societies</button>
+                        <button onClick={() => navigate('/student/hackathons')} className="nav-btn">Hackathons</button>
                         <a href="#marketplace">Marketplace</a>
                     </div>
                 </div>
@@ -394,15 +407,70 @@ const Home = ({ onLogout }) => {
                         <div className="events-col">
                             <div className="section-header left-align">
                                 <h2>Build Something Great</h2>
+                                <p className="section-subtitle" style={{textAlign:'left'}}>Live hackathons across India</p>
                             </div>
-                            <div className="hackathon-card">
-                                <h4>IIT Bombay Hackathon</h4>
-                                <p className="hack-meta">Online • 12 days left</p>
-                                <div className="hack-tags">
-                                    <span>Web3</span><span>AI</span>
+
+                            {/* Live hackathon preview */}
+                            {hacksLoading ? (
+                                <div style={{display:'flex', flexDirection:'column', gap:'0.75rem'}}>
+                                    {[1,2,3].map(i => (
+                                        <div key={i} className="hackathon-card" style={{opacity:0.5, animation:'pulse 1.4s ease-in-out infinite'}}>
+                                            <div style={{height:'12px', background:'rgba(58,46,40,0.1)', borderRadius:'4px', width:'60%', marginBottom:'0.5rem'}} />
+                                            <div style={{height:'10px', background:'rgba(58,46,40,0.07)', borderRadius:'4px', width:'40%'}} />
+                                        </div>
+                                    ))}
                                 </div>
-                                <button className="vintage-btn-secondary mt-1">View Hackathon</button>
-                            </div>
+                            ) : previewHacks.length === 0 ? (
+                                <div className="hackathon-card" style={{textAlign:'center', padding:'1.5rem', color:'var(--text-secondary)'}}>
+                                    <Trophy size={28} style={{marginBottom:'0.5rem', opacity:0.4}} />
+                                    <p style={{margin:0, fontStyle:'italic'}}>Hackathons loading…</p>
+                                </div>
+                            ) : (
+                                <div style={{display:'flex', flexDirection:'column', gap:'0.75rem'}}>
+                                    {previewHacks.map((h) => {
+                                        const color = getPlatformColor(h.platform);
+                                        const regDays = daysUntil(h.registration_end);
+                                        const closingSoon = regDays !== null && regDays >= 0 && regDays <= 7;
+                                        return (
+                                            <div
+                                                key={h.id + h.title}
+                                                className="hackathon-card"
+                                                style={{borderLeft:`3px solid ${color}`, cursor:'pointer'}}
+                                                onClick={() => window.open(h.url, '_blank', 'noopener')}
+                                            >
+                                                <div style={{display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'0.4rem', flexWrap:'wrap'}}>
+                                                    <span style={{fontSize:'0.7rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', color:'#fff', background:color, padding:'0.2rem 0.55rem', borderRadius:'20px'}}>
+                                                        {getPlatformLabel(h.platform)}
+                                                    </span>
+                                                    <span style={{fontSize:'0.73rem', display:'flex', alignItems:'center', gap:'0.25rem', color: h.mode==='online' ? '#047857' : '#92400E'}}>
+                                                        {h.mode === 'online' ? <Globe size={11} /> : <MapPin size={11} />}
+                                                        {h.mode ? h.mode.charAt(0).toUpperCase() + h.mode.slice(1) : 'TBA'}
+                                                    </span>
+                                                    {closingSoon && (
+                                                        <span style={{fontSize:'0.7rem', fontWeight:700, color:'#B45309', background:'rgba(217,119,6,0.1)', border:'1px solid rgba(217,119,6,0.25)', padding:'0.15rem 0.45rem', borderRadius:'20px'}}>
+                                                            ⚠ {regDays === 0 ? 'Today!' : `${regDays}d left`}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <h4 style={{margin:'0 0 0.25rem', fontSize:'0.95rem', lineHeight:1.3}}>{h.title}</h4>
+                                                {h.registration_end && (
+                                                    <p className="hack-meta" style={{display:'flex', alignItems:'center', gap:'0.3rem'}}>
+                                                        <Calendar size={11}/> Register by {formatDate(h.registration_end)}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            <button
+                                className="vintage-link mt-1"
+                                onClick={() => navigate('/student/hackathons')}
+                                style={{display:'flex', alignItems:'center', gap:'0.25rem'}}
+                            >
+                                View All Hackathons <ChevronRight size={16}/>
+                            </button>
                         </div>
                     </div>
                 </section>

@@ -10,6 +10,8 @@ from app.api import roommate
 from app.api import buildings
 from app.api import users
 from app.api.complaints import router as complaints_router, admin_router as maintenance_admin_router
+from app.api.societies import router as societies_router
+from app.ws.channel_ws import ws_router
 
 from app.core.config import settings
 
@@ -39,6 +41,8 @@ app.include_router(buildings.router, prefix="/api/buildings", tags=["buildings"]
 app.include_router(auth.router)
 app.include_router(complaints_router, prefix="/api")
 app.include_router(maintenance_admin_router, prefix="/api")
+app.include_router(societies_router)
+app.include_router(ws_router)
 
 @app.get("/health")
 def health_check():

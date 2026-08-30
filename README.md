@@ -27,6 +27,12 @@ CampusHelp is a comprehensive, centralized digital portal designed exclusively f
 ### 🗺️ Campus Navigation
 - **Interactive Map**: Integrated OpenStreetMap/Leaflet functionality to help students navigate the vast IIT KGP campus, find halls, and locate academic buildings.
 
+### 📢 Real-Time Society Channels
+- **Multi-Channel Societies**: Discover and join various college societies, each with multiple dedicated communication channels (e.g., General, Core Team, Events).
+- **Public & Private Channels**: Flexible access control allowing admins to create public channels for anyone to join or private channels requiring approval.
+- **Real-Time Communication**: Seamless, instant messaging powered by WebSockets for active discussions within society channels.
+- **Role-Based Channel Management**: Dedicated society and channel admins to manage members, access requests, and channel visibility.
+
 ---
 
 ## 💻 Technology Stack
@@ -38,6 +44,7 @@ CampusHelp is a comprehensive, centralized digital portal designed exclusively f
 
 **Backend:**
 - FastAPI (Python)
+- WebSockets (Real-time communication)
 - SQLAlchemy (Async ORM)
 - PostgreSQL (Supabase) with `pgvector` for AI embeddings
 - Celery (Background Tasks & SLA Monitoring)

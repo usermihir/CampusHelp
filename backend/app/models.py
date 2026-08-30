@@ -215,3 +215,91 @@ class ComplaintStatusHistory(Base):
     created_at   = Column(DateTime(timezone=True), server_default=text('now()'), nullable=False)
 
     complaint = relationship("Complaint", back_populates="history")
+
+
+# =============================================================
+# Society Channel Models
+# =============================================================
+
+from sqlalchemy import Boolean, BigInteger
+
+class Society(Base):
+    __tablename__ = 'societies'
+
+    id          = Column(BigInteger, primary_key=True, autoincrement=True)
+    name        = Column(Text, nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    logo_url    = Column(Text, nullable=True)
+    created_by  = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    created_at  = Column(DateTime(timezone=True), server_default=text('now()'), nullable=False)
+    updated_at  = Column(DateTime(timezone=True), server_default=text('now()'), nullable=False)
+
+    admins   = relationship('SocietyAdmin',  back_populates='society', cascade='all, delete-orphan')
+    members  = relationship('SocietyMember', back_populates='society', cascade='all, delete-orphan')
+    channels = relationship('Channel',       back_populates='society', cascade='all, delete-orphan')
+
+
+class SocietyAdmin(Base):
+    __tablename__ = 'society_admins'
+
+    society_id = Column(BigInteger, ForeignKey('societies.id', ondelete='CASCADE'), primary_key=True)
+    user_id    = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    granted_by = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=text('now()'), nullable=False)
+
+    society = relationship('Society', back_populates='admins')
+
+
+class SocietyMember(Base):
+    __tablename__ = 'society_members'
+
+    society_id = Column(BigInteger, ForeignKey('societies.id', ondelete='CASCADE'), primary_key=True)
+    user_id    = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    added_by   = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
+    joined_at  = Column(DateTime(timezone=True), server_default=text('now()'), nullable=False)
+
+    society = relationship('Society', back_populates='members')
+
+
+class Channel(Base):
+    __tablename__ = 'channels'
+
+    id          = Column(BigInteger, primary_key=True, autoincrement=True)
+    society_id  = Column(BigInteger, ForeignKey('societies.id', ondelete='CASCADE'), nullable=False)
+    name        = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    is_private  = Column(Boolean, nullable=False, default=False, server_default='false')
+    is_archived = Column(Boolean, nullable=False, default=False, server_default='false')
+    created_by  = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    created_at  = Column(DateTime(timezone=True), server_default=text('now()'), nullable=False)
+    updated_at  = Column(DateTime(timezone=True), server_default=text('now()'), nullable=False)
+
+    society = relationship('Society', back_populates='channels')
+    members = relationship('ChannelMember', back_populates='channel', cascade='all, delete-orphan')
+    messages = relationship('Message', back_populates='channel', cascade='all, delete-orphan',
+                            order_by='Message.created_at')
+
+
+class ChannelMember(Base):
+    __tablename__ = 'channel_members'
+
+    channel_id = Column(BigInteger, ForeignKey('channels.id', ondelete='CASCADE'), primary_key=True)
+    user_id    = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    role       = Column(Text, nullable=False, default='member', server_default='member')
+    joined_at  = Column(DateTime(timezone=True), server_default=text('now()'), nullable=False)
+
+    channel = relationship('Channel', back_populates='members')
+
+
+class Message(Base):
+    __tablename__ = 'messages'
+
+    id         = Column(BigInteger, primary_key=True, autoincrement=True)
+    channel_id = Column(BigInteger, ForeignKey('channels.id', ondelete='CASCADE'), nullable=False)
+    sender_id  = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    content    = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=text('now()'), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=True)
+
+    channel = relationship('Channel', back_populates='messages')
+
