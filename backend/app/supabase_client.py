@@ -1,14 +1,19 @@
 import httpx
+import uuid
+from supabase import create_client, Client
 from app.core.config import settings
 
 SUPABASE_URL = None
 SUPABASE_KEY = None
+supabase_client_instance: Client = None
 
 def _get_settings():
-    global SUPABASE_URL, SUPABASE_KEY
+    global SUPABASE_URL, SUPABASE_KEY, supabase_client_instance
     if SUPABASE_URL is None:
         SUPABASE_URL = settings.SUPABASE_URL
         SUPABASE_KEY = settings.SUPABASE_KEY
+        if SUPABASE_URL and SUPABASE_KEY:
+            supabase_client_instance = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def admin_create_user(email: str, password: str) -> dict:
     """Create a new user in Supabase Auth via Admin API (bypasses email confirmation)."""
@@ -107,3 +112,24 @@ async def upload_to_supabase(file_name: str, file_bytes: bytes, content_type: st
 
     public_url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{file_name}"
     return public_url
+
+def generate_presigned_url(file_name: str) -> dict:
+    """Generates a presigned URL for direct upload from the frontend."""
+    _get_settings()
+    if not supabase_client_instance:
+        raise ValueError("Supabase client is not initialized")
+        
+    file_ext = file_name.split(".")[-1] if "." in file_name else ""
+    unique_name = f"{uuid.uuid4()}.{file_ext}" if file_ext else f"{uuid.uuid4()}"
+    
+    # Generate signed upload URL for 15 minutes (or default depending on SDK)
+    # The SDK method returns a dict with 'path' and 'token'
+    res = supabase_client_instance.storage.from_(BUCKET).create_signed_upload_url(unique_name)
+    
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{res['path']}"
+    
+    return {
+        "path": res["path"],
+        "token": res["token"],
+        "publicUrl": public_url
+    }

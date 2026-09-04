@@ -16,6 +16,11 @@ api.interceptors.request.use((config) => {
 
 export default api;
 
+export const getUploadUrl = async (filename) => {
+    const response = await api.post('/items/upload-url', { filename });
+    return response.data;
+};
+
 export const createItem = async (itemData) => {
     const formData = new FormData();
     

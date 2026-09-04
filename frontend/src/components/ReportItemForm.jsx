@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { createItem } from '../services/api';
+import { createItem, getUploadUrl } from '../services/api';
+import { supabaseClient } from '../services/supabaseClient';
 import { Send, Tag, PenTool, Book, MapPin, Paperclip } from 'lucide-react';
 
 const ReportItemForm = ({ onReportSuccess }) => {
@@ -25,7 +26,29 @@ const ReportItemForm = ({ onReportSuccess }) => {
         e.preventDefault();
         setLoading(true);
         try {
-            await createItem(formData);
+            let submitData = { ...formData };
+
+            if (formData.image) {
+                // Step 1: Get presigned URL
+                const { path, token, publicUrl } = await getUploadUrl(formData.image.name);
+                
+                // Step 2: Upload directly to Supabase
+                const { error } = await supabaseClient.storage
+                    .from('items')
+                    .uploadToSignedUrl(path, token, formData.image);
+                    
+                if (error) {
+                    throw new Error(`Upload failed: ${error.message}`);
+                }
+                
+                // Set the public URL to be sent to backend
+                submitData.image_url = publicUrl;
+            }
+            
+            // Remove the raw File object before sending to backend
+            delete submitData.image;
+
+            await createItem(submitData);
             alert('Item reported successfully!');
             setFormData({ type: 'lost', title: '', description: '', category: 'electronics', location: '', image: null });
             if (onReportSuccess) onReportSuccess();

@@ -1,16 +1,20 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
 from uuid import UUID
+from pydantic import BaseModel
 import uuid
 
 from app.database import get_db, AsyncSessionLocal
 from app.schemas import ItemResponse, MatchResponse
 from app.models import Item, Match, User, ItemType
 from app.services.matching import find_candidates
-from app.supabase_client import upload_to_supabase
+from app.supabase_client import generate_presigned_url
 from app.api.auth import get_current_user
+
+class UploadRequest(BaseModel):
+    filename: str
 
 router = APIRouter()
 
@@ -18,6 +22,13 @@ router = APIRouter()
 async def run_matching_task(item_id: UUID):
     async with AsyncSessionLocal() as session:
         await find_candidates(session, item_id)
+
+@router.post("/items/upload-url")
+def create_upload_url(request: UploadRequest, current_user: UUID = Depends(get_current_user)):
+    try:
+        return generate_presigned_url(request.filename)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/items", response_model=ItemResponse, status_code=201)
 async def create_item(
@@ -27,20 +38,10 @@ async def create_item(
     category: str = Form(...),
     description: Optional[str] = Form(None),
     location: Optional[str] = Form(None),
-    image: Optional[UploadFile] = File(None),
+    image_url: Optional[str] = Form(None),
     user_id: UUID = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    image_url = None
-    if image and image.filename:
-        try:
-            file_ext = image.filename.split(".")[-1]
-            file_name = f"{uuid.uuid4()}.{file_ext}"
-            file_bytes = await image.read()
-            content_type = image.content_type or "application/octet-stream"
-            image_url = await upload_to_supabase(file_name, file_bytes, content_type)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Image upload failed: {str(e)}")
 
     new_item = Item(
         user_id=user_id,
