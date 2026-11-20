@@ -1,331 +1,232 @@
-import React, { useState } from 'react';
-import { Mail, Compass, KeyRound, Building2, ChevronRight, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Mail, Compass } from 'lucide-react';
 import api from '../services/api';
 import './Auth.css';
 
+const RESEND_COOLDOWN = 60; // seconds
+
 const Auth = ({ onAuthSuccess }) => {
-    const [mode, setMode] = useState('login'); // 'login', 'signup', 'forgot'
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
-
-    // Shared state
+    const [step, setStep] = useState(1); // 1 = Enter email, 2 = Enter OTP
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    
-    // Signup specific
-    const [signupStep, setSignupStep] = useState(1); // 1: Email, 2: OTP, 3: Password & Hall
     const [otp, setOtp] = useState('');
-    const [signupToken, setSignupToken] = useState(null);
-    const [halls, setHalls] = useState([]);
-    const [selectedHallId, setSelectedHallId] = useState('');
-    const [hallsLoading, setHallsLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
 
-    // Forgot password specific
-    const [forgotStep, setForgotStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
-    const [resetToken, setResetToken] = useState(null);
+    // Resend countdown
+    const [resendCooldown, setResendCooldown] = useState(0);
+    const cooldownRef = useRef(null);
 
-    const clearMessages = () => { setMessage(''); setError(''); };
-
-    const loadHalls = async () => {
-        setHallsLoading(true);
-        try {
-            const hallsRes = await api.get('/complaints/halls');
-            setHalls(hallsRes.data || []);
-        } catch {
-            console.error("Could not load halls");
-        }
-        setHallsLoading(false);
+    const startCooldown = () => {
+        setResendCooldown(RESEND_COOLDOWN);
+        cooldownRef.current = setInterval(() => {
+            setResendCooldown(prev => {
+                if (prev <= 1) {
+                    clearInterval(cooldownRef.current);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
     };
 
-    // ── LOGIN ──────────────────────────────────────────
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true); clearMessages();
+    useEffect(() => () => clearInterval(cooldownRef.current), []);
+
+    const clearMessages = () => { setError(''); setMessage(''); };
+
+    // ── Step 1: Request OTP ──────────────────────────────────────
+    const handleRequestOTP = async (e) => {
+        if (e) e.preventDefault();
+        const normalizedEmail = email.trim().toLowerCase();
+
+        // Frontend guard — real enforcement is on the backend
+        const domain = normalizedEmail.rsplit
+            ? normalizedEmail.split('@').pop()
+            : normalizedEmail.split('@').slice(-1)[0];
+        if (domain !== 'kgpian.iitkgp.ac.in') {
+            setError('Only @kgpian.iitkgp.ac.in email addresses are allowed.');
+            return;
+        }
+
+        setLoading(true);
+        clearMessages();
         try {
-            const res = await api.post('/auth/login', { email, password });
-            const { access_token } = res.data;
+            const res = await api.post('/auth/request-otp', { email: normalizedEmail });
+            setEmail(normalizedEmail);
+            setMessage(res.data.message);
+            setStep(2);
+            startCooldown();
+        } catch (err) {
+            setError(
+                err.response?.data?.detail ||
+                err.message ||
+                'Failed to send OTP. Please try again.'
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ── Resend OTP ───────────────────────────────────────────────
+    const handleResend = async () => {
+        if (resendCooldown > 0 || loading) return;
+        setOtp('');
+        clearMessages();
+        await handleRequestOTP(null);
+    };
+
+    // ── Step 2: Verify OTP ───────────────────────────────────────
+    const handleVerifyOTP = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        clearMessages();
+        try {
+            const res = await api.post('/auth/verify-otp', { email, token: otp });
+            const { access_token, refresh_token } = res.data;
             localStorage.setItem('kgp_auth_token', access_token);
+            if (refresh_token) {
+                localStorage.setItem('kgp_refresh_token', refresh_token);
+            }
             onAuthSuccess(access_token);
         } catch (err) {
-            setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+            setError(
+                err.response?.data?.detail ||
+                'OTP verification failed. Please check the code and try again.'
+            );
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
-    // ── SIGNUP ─────────────────────────────────────────
-    const handleSignupRequestOtp = async (e) => {
-        e.preventDefault();
-        setLoading(true); clearMessages();
-        try {
-            const res = await api.post('/auth/signup/request-otp', { email });
-            setMessage(res.data.message);
-            setSignupStep(2);
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Failed to request OTP');
-        }
-        setLoading(false);
-    };
-
-    const handleSignupVerifyOtp = async (e) => {
-        e.preventDefault();
-        setLoading(true); clearMessages();
-        try {
-            const res = await api.post('/auth/signup/verify-otp', { email, token: otp });
-            setSignupToken(res.data.signup_token);
-            setSignupStep(3);
-            loadHalls();
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Invalid or expired OTP');
-        }
-        setLoading(false);
-    };
-
-    const handleSignupComplete = async (e) => {
-        e.preventDefault();
-        setLoading(true); clearMessages();
-        try {
-            const res = await api.post('/auth/signup/complete', { email, password, signup_token: signupToken });
-            const { access_token } = res.data;
-            if (access_token) {
-                localStorage.setItem('kgp_auth_token', access_token);
-                // Save hall if selected
-                if (selectedHallId) {
-                    try {
-                        await api.patch(`/complaints/me/hall?hall_id=${selectedHallId}`);
-                        localStorage.setItem('kgp_hall_id', selectedHallId);
-                    } catch (err) {
-                        console.error("Failed to save hall", err);
-                    }
-                }
-                onAuthSuccess(access_token);
-            } else {
-                setMessage('Account created! You can now log in.');
-                setMode('login');
-            }
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Failed to complete signup');
-        }
-        setLoading(false);
-    };
-
-    // ── FORGOT PASSWORD ────────────────────────────────
-    const handleForgotRequestOtp = async (e) => {
-        e.preventDefault();
-        setLoading(true); clearMessages();
-        try {
-            const res = await api.post('/auth/password/request-otp', { email });
-            setMessage(res.data.message);
-            setForgotStep(2);
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Request failed');
-        }
-        setLoading(false);
-    };
-
-    const handleForgotVerifyOtp = async (e) => {
-        e.preventDefault();
-        setLoading(true); clearMessages();
-        try {
-            const res = await api.post('/auth/password/verify-otp', { email, token: otp });
-            setResetToken(res.data.reset_token);
-            setForgotStep(3);
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Invalid OTP');
-        }
-        setLoading(false);
-    };
-
-    const handleForgotReset = async (e) => {
-        e.preventDefault();
-        setLoading(true); clearMessages();
-        try {
-            const res = await api.post('/auth/password/reset', { password, reset_token: resetToken });
-            setMessage(res.data.message);
-            setMode('login');
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Failed to reset password');
-        }
-        setLoading(false);
-    };
-
-    // ── UI RENDERING ───────────────────────────────────
-    const renderModeToggle = () => (
-        <div className="form-options" style={{ marginTop: '1.5rem', justifyContent: 'center', gap: '1rem' }}>
-            {mode !== 'login' && <button type="button" className="forgot-password" onClick={() => {setMode('login'); clearMessages();}} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>Back to Login</button>}
-            {mode !== 'signup' && <button type="button" className="forgot-password" onClick={() => {setMode('signup'); setSignupStep(1); clearMessages();}} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>Create Account</button>}
-            {mode === 'login' && <button type="button" className="forgot-password" onClick={() => {setMode('forgot'); setForgotStep(1); clearMessages();}} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>Forgot Password?</button>}
-        </div>
-    );
-
+    // ── UI ───────────────────────────────────────────────────────
     return (
         <div className="vintage-auth-wrapper">
             <div className="vintage-auth-container">
-                
-                {/* Left Side */}
+
+                {/* Left Side — illustration */}
                 <div className="auth-illustration-side desktop-only">
                     <img src="/vintage-illustration.jpg" alt="Vintage Campus" className="vintage-illustration" />
                     <div className="illustration-overlay"></div>
                 </div>
 
-                {/* Right Side */}
+                {/* Right Side — form */}
                 <div className="auth-form-side">
                     <div className="auth-form-content">
-                        
+
                         <div className="auth-brand">
                             <Compass size={32} />
                         </div>
 
+                        {/* Step indicator */}
+                        <div className="auth-step-indicator">
+                            <div className={`auth-step-dot ${step >= 1 ? (step > 1 ? 'done' : 'active') : ''}`} />
+                            <div className={`auth-step-dot ${step === 2 ? 'active' : ''}`} />
+                        </div>
+
                         <div className="auth-header">
                             <h2>
-                                {mode === 'login' && 'Welcome Back'}
-                                {mode === 'signup' && 'Create Account'}
-                                {mode === 'forgot' && 'Reset Password'}
+                                {step === 1 ? 'Welcome to CampusHelp' : 'Verify your email'}
                             </h2>
                             <p className="auth-subtitle">
-                                {mode === 'login' && '"Access your CampusHelp portal."'}
-                                {mode === 'signup' && '"Begin your journey with a simple step."'}
-                                {mode === 'forgot' && '"Recover your secure access."'}
+                                {step === 1
+                                    ? '"Sign in or create an account."'
+                                    : `"Enter the code sent to ${email}"`}
                             </p>
                         </div>
 
                         <div className="ornamental-divider" style={{ marginBottom: '2.5rem' }}></div>
 
-                        {message && <div style={{ marginBottom: '1.5rem', color: '#2e7d32', fontSize: '0.9rem', padding: '1rem', backgroundColor: '#e8f5e9', borderRadius: '2px', borderLeft: '4px solid #4caf50' }}>{message}</div>}
-                        {error && <div style={{ marginBottom: '1.5rem', color: '#c62828', fontSize: '0.9rem', padding: '1rem', backgroundColor: '#ffebee', borderRadius: '2px', borderLeft: '4px solid #ef5350' }}>{error}</div>}
+                        {message && (
+                            <div style={{ marginBottom: '1.5rem', color: '#2e7d32', fontSize: '0.9rem', padding: '1rem', backgroundColor: '#e8f5e9', borderRadius: '2px', borderLeft: '4px solid #4caf50' }}>
+                                {message}
+                            </div>
+                        )}
+                        {error && (
+                            <div style={{ marginBottom: '1.5rem', color: '#c62828', fontSize: '0.9rem', padding: '1rem', backgroundColor: '#ffebee', borderRadius: '2px', borderLeft: '4px solid #ef5350' }}>
+                                {error}
+                            </div>
+                        )}
 
-                        {/* LOGIN MODE */}
-                        {mode === 'login' && (
-                            <form className="vintage-form" onSubmit={handleLogin}>
+                        {/* STEP 1 — Email input */}
+                        {step === 1 && (
+                            <form className="vintage-form" onSubmit={handleRequestOTP}>
                                 <div className="form-group">
-                                    <label>Email Address</label>
+                                    <label>KGPian Email Address</label>
                                     <div className="input-wrapper">
                                         <Mail size={18} className="input-icon" />
-                                        <input type="email" placeholder="student@kgpian.iitkgp.ac.in" value={email} onChange={e => setEmail(e.target.value)} required />
-                                    </div>
-                                </div>
-                                <div className="form-group">
-                                    <label>Password</label>
-                                    <div className="input-wrapper">
-                                        <KeyRound size={18} className="input-icon" />
-                                        <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+                                        <input
+                                            type="email"
+                                            placeholder="student@kgpian.iitkgp.ac.in"
+                                            value={email}
+                                            onChange={e => setEmail(e.target.value)}
+                                            required
+                                            autoFocus
+                                        />
                                     </div>
                                 </div>
                                 <button type="submit" className="vintage-btn-primary" disabled={loading}>
-                                    {loading ? 'Authenticating...' : 'Sign In'} 
+                                    {loading ? 'Sending...' : 'Send OTP'}
                                 </button>
                             </form>
                         )}
 
-                        {/* SIGNUP MODE */}
-                        {mode === 'signup' && (
-                            <>
-                                {signupStep === 1 && (
-                                    <form className="vintage-form" onSubmit={handleSignupRequestOtp}>
-                                        <div className="form-group">
-                                            <label>KGP Email Address</label>
-                                            <div className="input-wrapper">
-                                                <Mail size={18} className="input-icon" />
-                                                <input type="email" placeholder="student@kgpian.iitkgp.ac.in" value={email} onChange={e => setEmail(e.target.value)} required />
-                                            </div>
-                                        </div>
-                                        <button type="submit" className="vintage-btn-primary" disabled={loading}>
-                                            {loading ? 'Sending OTP...' : 'Send Verification Code'}
-                                        </button>
-                                    </form>
-                                )}
-                                {signupStep === 2 && (
-                                    <form className="vintage-form" onSubmit={handleSignupVerifyOtp}>
-                                        <div className="form-group">
-                                            <label>Verification Code (OTP)</label>
-                                            <div className="input-wrapper otp-wrapper">
-                                                <input type="text" placeholder="------" maxLength={6} value={otp} onChange={e => setOtp(e.target.value)} required style={{ textAlign: 'center', letterSpacing: '0.2em' }} />
-                                            </div>
-                                        </div>
-                                        <button type="submit" className="vintage-btn-primary" style={{ marginBottom: '1rem' }} disabled={loading}>
-                                            {loading ? 'Verifying...' : 'Verify OTP'}
-                                        </button>
-                                        <button type="button" onClick={handleSignupRequestOtp} className="vintage-btn-primary" style={{ background: 'transparent', color: '#8c7355' }} disabled={loading}>Resend Code</button>
-                                    </form>
-                                )}
-                                {signupStep === 3 && (
-                                    <form className="vintage-form" onSubmit={handleSignupComplete}>
-                                        <div className="form-group">
-                                            <label>Create Password</label>
-                                            <div className="input-wrapper">
-                                                <KeyRound size={18} className="input-icon" />
-                                                <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
-                                            </div>
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Select Hall (Optional)</label>
-                                            <div className="input-wrapper">
-                                                <Building2 size={18} className="input-icon" />
-                                                <select value={selectedHallId} onChange={e => setSelectedHallId(e.target.value)} style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 2.5rem', background: '#fffbfa', border: '1px solid #d7ccc8', fontFamily: 'Inter', color: '#4e342e' }}>
-                                                    <option value="">Select a hall...</option>
-                                                    {halls.map(h => (
-                                                        <option key={h.id} value={h.id}>{h.name}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <button type="submit" className="vintage-btn-primary" disabled={loading}>
-                                            {loading ? 'Creating...' : 'Complete Account'}
-                                        </button>
-                                    </form>
-                                )}
-                            </>
+                        {/* STEP 2 — OTP input */}
+                        {step === 2 && (
+                            <form className="vintage-form" onSubmit={handleVerifyOTP}>
+                                <div className="form-group">
+                                    <label>Verification Code</label>
+                                    <div className="input-wrapper otp-wrapper">
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            autoComplete="one-time-code"
+                                            placeholder="——————"
+                                            maxLength={6}
+                                            pattern="[0-9]{6}"
+                                            value={otp}
+                                            onChange={e =>
+                                                setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                                            }
+                                            required
+                                            autoFocus
+                                            style={{ textAlign: 'center', letterSpacing: '0.3em', paddingLeft: '1rem' }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="vintage-btn-primary"
+                                    disabled={loading || otp.length < 6}
+                                    style={{ marginBottom: '1rem' }}
+                                >
+                                    {loading ? 'Verifying...' : 'Verify & Continue'}
+                                </button>
+
+                                {/* Resend + change email */}
+                                <div className="form-options" style={{ marginTop: '1rem', justifyContent: 'center', gap: '1rem' }}>
+                                    <button
+                                        type="button"
+                                        className="forgot-password"
+                                        onClick={handleResend}
+                                        disabled={resendCooldown > 0 || loading}
+                                        style={{ background: 'none', border: 'none', cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer', opacity: resendCooldown > 0 ? 0.5 : 1 }}
+                                    >
+                                        {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
+                                    </button>
+                                    <span style={{ color: '#d7ccc8' }}>|</span>
+                                    <button
+                                        type="button"
+                                        className="forgot-password"
+                                        onClick={() => { setStep(1); setOtp(''); clearMessages(); }}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                                    >
+                                        Change email
+                                    </button>
+                                </div>
+                            </form>
                         )}
 
-                        {/* FORGOT PASSWORD MODE */}
-                        {mode === 'forgot' && (
-                            <>
-                                {forgotStep === 1 && (
-                                    <form className="vintage-form" onSubmit={handleForgotRequestOtp}>
-                                        <div className="form-group">
-                                            <label>Account Email</label>
-                                            <div className="input-wrapper">
-                                                <Mail size={18} className="input-icon" />
-                                                <input type="email" placeholder="student@kgpian.iitkgp.ac.in" value={email} onChange={e => setEmail(e.target.value)} required />
-                                            </div>
-                                        </div>
-                                        <button type="submit" className="vintage-btn-primary" disabled={loading}>
-                                            {loading ? 'Sending OTP...' : 'Send Reset Code'}
-                                        </button>
-                                    </form>
-                                )}
-                                {forgotStep === 2 && (
-                                    <form className="vintage-form" onSubmit={handleForgotVerifyOtp}>
-                                        <div className="form-group">
-                                            <label>Reset Code (OTP)</label>
-                                            <div className="input-wrapper otp-wrapper">
-                                                <input type="text" placeholder="------" maxLength={6} value={otp} onChange={e => setOtp(e.target.value)} required style={{ textAlign: 'center', letterSpacing: '0.2em' }} />
-                                            </div>
-                                        </div>
-                                        <button type="submit" className="vintage-btn-primary" style={{ marginBottom: '1rem' }} disabled={loading}>
-                                            {loading ? 'Verifying...' : 'Verify OTP'}
-                                        </button>
-                                        <button type="button" onClick={handleForgotRequestOtp} className="vintage-btn-primary" style={{ background: 'transparent', color: '#8c7355' }} disabled={loading}>Resend Code</button>
-                                    </form>
-                                )}
-                                {forgotStep === 3 && (
-                                    <form className="vintage-form" onSubmit={handleForgotReset}>
-                                        <div className="form-group">
-                                            <label>New Password</label>
-                                            <div className="input-wrapper">
-                                                <KeyRound size={18} className="input-icon" />
-                                                <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
-                                            </div>
-                                        </div>
-                                        <button type="submit" className="vintage-btn-primary" disabled={loading}>
-                                            {loading ? 'Updating...' : 'Update Password'}
-                                        </button>
-                                    </form>
-                                )}
-                            </>
-                        )}
-
-                        {renderModeToggle()}
                     </div>
                 </div>
             </div>

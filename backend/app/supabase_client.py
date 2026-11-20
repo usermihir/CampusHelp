@@ -3,6 +3,59 @@ import uuid
 from supabase import create_client, Client
 from app.core.config import settings
 
+# ---------------------------------------------------------------------------
+# Supabase native OTP helpers (passwordless auth)
+# ---------------------------------------------------------------------------
+
+async def request_otp_via_supabase(email: str) -> None:
+    """
+    Ask Supabase to generate and email a 6-digit OTP.
+    Uses the anon key — this is a user-facing auth operation.
+    create_user=True means Supabase will create the auth.users record on the
+    first call, so the same endpoint handles both signup and login.
+    """
+    if not settings.SUPABASE_URL or not settings.SUPABASE_ANON_KEY:
+        raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set")
+
+    url = f"{settings.SUPABASE_URL}/auth/v1/otp"
+    headers = {
+        "apikey": settings.SUPABASE_ANON_KEY,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "email": email,
+        "create_user": True,
+    }
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.post(url, headers=headers, json=payload)
+    if resp.status_code not in (200, 204):
+        raise Exception(f"Supabase OTP request failed ({resp.status_code}): {resp.text}")
+
+
+async def verify_otp_via_supabase(email: str, token: str) -> dict:
+    """
+    Verify the OTP token with Supabase.
+    Returns the full session dict (access_token, refresh_token, user …).
+    """
+    if not settings.SUPABASE_URL or not settings.SUPABASE_ANON_KEY:
+        raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set")
+
+    url = f"{settings.SUPABASE_URL}/auth/v1/verify"
+    headers = {
+        "apikey": settings.SUPABASE_ANON_KEY,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "email": email,
+        "token": token,
+        "type": "email",
+    }
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.post(url, headers=headers, json=payload)
+    if resp.status_code != 200:
+        raise Exception(f"OTP verification failed ({resp.status_code}): {resp.text}")
+    return resp.json()
+
 SUPABASE_URL = None
 SUPABASE_KEY = None
 supabase_client_instance: Client = None

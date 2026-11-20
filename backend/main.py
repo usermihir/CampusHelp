@@ -15,9 +15,6 @@ from app.ws.channel_ws import ws_router
 
 from app.core.config import settings
 
-if settings.APP_ENV == "production" and settings.OTP_MODE == "development":
-    raise RuntimeError("Development OTP mode cannot be enabled when APP_ENV=production.")
-
 app = FastAPI(title="CampusHelp API")
 
 # Setup Rate Limiting
@@ -25,10 +22,16 @@ app.state.limiter = auth.limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
-# Setup CORS for the frontend
+# CORS — origins are read from ALLOWED_ORIGINS env var (comma-separated)
+_allowed_origins = [
+    o.strip()
+    for o in settings.ALLOWED_ORIGINS.split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

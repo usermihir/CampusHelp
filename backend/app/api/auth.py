@@ -9,35 +9,64 @@ from sqlalchemy import select, text
 
 from app.database import get_db
 from app.models import User, UserRole
-from app.services.otp_service import create_and_send_otp, verify_otp
-from app.services.jwt_service import create_temporary_token, verify_temporary_token
-from app.supabase_client import admin_create_user, sign_in_with_password, admin_update_user_password, get_user_from_token
-from pydantic import BaseModel, EmailStr
+from app.supabase_client import (
+    request_otp_via_supabase,
+    verify_otp_via_supabase,
+    get_user_from_token,
+)
+from pydantic import BaseModel, EmailStr, field_validator
 
 logger = logging.getLogger("kgp_auth")
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 limiter = Limiter(key_func=get_remote_address)
 security = HTTPBearer()
 
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+def _normalize_email(email: str) -> str:
+    return str(email).strip().lower()
+
+def _assert_kgp_email(email: str) -> None:
+    domain = email.rsplit("@", 1)[-1]
+    if domain != "kgpian.iitkgp.ac.in":
+        raise HTTPException(
+            status_code=400,
+            detail="Only @kgpian.iitkgp.ac.in email addresses are allowed.",
+        )
+
+# ---------------------------------------------------------------------------
+# Request / response models
+# ---------------------------------------------------------------------------
+
 class OTPRequest(BaseModel):
     email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def normalize(cls, v: str) -> str:
+        return _normalize_email(v)
+
 
 class OTPVerify(BaseModel):
     email: EmailStr
     token: str
 
-class SignupCompleteRequest(BaseModel):
-    email: EmailStr
-    password: str
-    signup_token: str
+    @field_validator("email")
+    @classmethod
+    def normalize(cls, v: str) -> str:
+        return _normalize_email(v)
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+    @field_validator("token")
+    @classmethod
+    def strip_token(cls, v: str) -> str:
+        return v.strip()
 
-class PasswordResetRequest(BaseModel):
-    password: str
-    reset_token: str
+
+# ---------------------------------------------------------------------------
+# Auth dependency — keep this working as before for all protected endpoints
+# ---------------------------------------------------------------------------
 
 def get_current_user(
     request: Request,
@@ -55,176 +84,108 @@ def get_current_user(
         )
     return UUID(user_data["id"])
 
-# -----------------------------------------------------------------------------
-# SIGNUP FLOW
-# -----------------------------------------------------------------------------
 
-@router.post("/signup/request-otp", status_code=status.HTTP_200_OK)
+# ---------------------------------------------------------------------------
+# NEW: Unified passwordless OTP endpoints
+# ---------------------------------------------------------------------------
+
+@router.post("/request-otp", status_code=status.HTTP_200_OK)
 @limiter.limit("5/hour")
-async def signup_request_otp(request: Request, payload: OTPRequest, db: AsyncSession = Depends(get_db)):
-    """Step 1: Request OTP for signup."""
-    # Ensure they have @kgpian.iitkgp.ac.in
-    if not payload.email.endswith("@kgpian.iitkgp.ac.in"):
-        raise HTTPException(status_code=400, detail="Only @kgpian.iitkgp.ac.in emails are permitted")
+async def request_otp(request: Request, payload: OTPRequest):
+    """
+    Step 1 — Send a 6-digit OTP to the user's KGPian email.
+    Works for both new (signup) and existing (login) accounts.
+    Supabase handles OTP generation, storage, expiry and delivery.
+    """
+    email = payload.email          # already normalised by validator
+    _assert_kgp_email(email)
 
-    # Check if user already exists
-    existing = await db.execute(select(User).where(User.email == payload.email))
-    if existing.scalars().first():
-        raise HTTPException(status_code=400, detail="Account already exists. Please login.")
+    try:
+        await request_otp_via_supabase(email)
+    except Exception as e:
+        logger.error(f"OTP request failed for {email}: {e}")
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to send OTP. Please try again in a moment.",
+        )
 
-    await create_and_send_otp(db, payload.email)
-    return {"message": "OTP sent."}
+    return {"message": "OTP sent to your email. It expires in 5 minutes."}
 
 
-@router.post("/signup/verify-otp", status_code=status.HTTP_200_OK)
+@router.post("/verify-otp", status_code=status.HTTP_200_OK)
 @limiter.limit("10/hour")
-async def signup_verify_otp(request: Request, payload: OTPVerify, db: AsyncSession = Depends(get_db)):
-    """Step 2: Verify OTP and return a signup token."""
-    await verify_otp(db, payload.email, payload.token)
-    
-    # Return short-lived token to prove verification in Step 3
-    signup_token = create_temporary_token(payload.email, "signup_verified", 15)
-    return {"message": "OTP verified successfully.", "signup_token": signup_token}
+async def verify_otp(
+    request: Request,
+    payload: OTPVerify,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Step 2 — Verify the OTP.
+    • Supabase validates the code and returns a session.
+    • We upsert the user into the local DB (new users get a STUDENT role).
+    • Returns access_token, refresh_token, and is_new_user flag.
+    """
+    email = payload.email          # already normalised by validator
+    _assert_kgp_email(email)
 
-
-@router.post("/signup/complete", status_code=status.HTTP_201_CREATED)
-async def signup_complete(payload: SignupCompleteRequest, db: AsyncSession = Depends(get_db)):
-    """Step 3: Provide password and create the account."""
-    # 1. Verify they completed step 2
+    # 1. Verify with Supabase
     try:
-        verified_email = verify_temporary_token(payload.signup_token, "signup_verified")
+        session = await verify_otp_via_supabase(email, payload.token)
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Invalid or expired signup session: {str(e)}")
-        
-    if verified_email != payload.email:
-        raise HTTPException(status_code=401, detail="Email mismatch.")
-        
-    # 2. Check existence again just in case
-    existing = await db.execute(select(User).where(User.email == payload.email))
-    if existing.scalars().first():
-        raise HTTPException(status_code=400, detail="Account already exists.")
+        logger.warning(f"OTP verification failed for {email}: {e}")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired OTP. Please request a new one.",
+        )
 
-    # 3. Create user in Supabase (handle race: user may already exist in Supabase but not local DB)
-    sb_user = None
+    # 2. Extract the Supabase user UUID from the session
     try:
-        sb_user = admin_create_user(payload.email, payload.password)
+        sb_user = session.get("user") or {}
+        user_id = UUID(sb_user["id"])
     except Exception as e:
-        err_str = str(e)
-        # Supabase returns 422 with error_code "email_exists" if the auth user already exists
-        # but our local DB doesn't have them yet (e.g. a previous signup crashed after Supabase
-        # but before the local db.commit()). Recover by fetching the existing Supabase user.
-        if "email_exists" in err_str or "422" in err_str:
-            logger.warning(f"Supabase user already exists for {payload.email}, recovering...")
-            try:
-                from app.supabase_client import _get_settings, SUPABASE_URL, SUPABASE_KEY
-                import httpx
-                _get_settings()
-                # Re-read module-level globals after _get_settings() call
-                from app.supabase_client import SUPABASE_URL as SB_URL, SUPABASE_KEY as SB_KEY
-                headers = {
-                    "apikey": SB_KEY,
-                    "Authorization": f"Bearer {SB_KEY}",
-                }
-                # Update the password so the user can actually log in with what they just chose
-                # First, list all users and find by email
-                with httpx.Client() as client:
-                    list_resp = client.get(f"{SB_URL}/auth/v1/admin/users", headers=headers)
-                    if list_resp.status_code != 200:
-                        raise Exception("Could not list Supabase users")
-                    users = list_resp.json().get("users", [])
-                    target = next((u for u in users if u.get("email") == payload.email), None)
-                    if not target:
-                        raise Exception("Could not locate existing Supabase user")
-                    uid = target["id"]
-                    # Update their password to what they just set
-                    update_headers = {**headers, "Content-Type": "application/json"}
-                    upd_resp = client.put(
-                        f"{SB_URL}/auth/v1/admin/users/{uid}",
-                        headers=update_headers,
-                        json={"password": payload.password},
-                    )
-                    if upd_resp.status_code != 200:
-                        raise Exception(f"Could not update existing Supabase user password ({upd_resp.status_code})")
-                    sb_user = target
-            except Exception as recover_err:
-                logger.error(f"Recovery from email_exists failed: {recover_err}")
-                raise HTTPException(status_code=500, detail="Failed to create account. Please try logging in instead.")
-        else:
-            logger.error(f"Failed to create Supabase user: {e}")
-            raise HTTPException(status_code=500, detail="Failed to create account")
-        
-    # 4. Insert into local DB
-    user_id = UUID(sb_user["id"])
-    new_user = User(id=user_id, email=payload.email)
-    db.add(new_user)
-    
-    # 5. Assign default STUDENT role (Prompt requirement: "Signup always creates STUDENT")
-    new_role = UserRole(user_id=user_id, role="STUDENT")
-    db.add(new_role)
-    
-    await db.commit()
-    
-    # 6. Automatically sign them in
-    try:
-        session = sign_in_with_password(payload.email, payload.password)
-        return {"message": "Account created successfully.", "access_token": session["access_token"]}
-    except Exception:
-        return {"message": "Account created. Please log in."}
+        logger.error(f"Could not extract user UUID from Supabase session: {e}")
+        raise HTTPException(status_code=500, detail="Authentication error. Please try again.")
 
+    access_token = session.get("access_token", "")
+    refresh_token = session.get("refresh_token", "")
 
-# -----------------------------------------------------------------------------
-# LOGIN FLOW
-# -----------------------------------------------------------------------------
+    # 3. Upsert into local users table
+    #    Use INSERT ... ON CONFLICT DO NOTHING for concurrency safety.
+    is_new_user = False
+    result = await db.execute(select(User).where(User.id == user_id))
+    existing_user = result.scalars().first()
 
-@router.post("/login", status_code=status.HTTP_200_OK)
-@limiter.limit("10/hour")
-def login(request: Request, payload: LoginRequest):
-    """Standard Email + Password login."""
-    try:
-        session = sign_in_with_password(payload.email, payload.password)
-        return {"access_token": session["access_token"]}
-    except Exception as e:
-        logger.warning(f"Login failed for {payload.email}: {e}")
-        raise HTTPException(status_code=401, detail="Invalid email or password.")
+    if not existing_user:
+        is_new_user = True
+        new_user = User(id=user_id, email=email)
+        db.add(new_user)
 
-# -----------------------------------------------------------------------------
-# PASSWORD RESET FLOW
-# -----------------------------------------------------------------------------
+        # Assign STUDENT role if not already present
+        new_role = UserRole(user_id=user_id, role="STUDENT")
+        db.add(new_role)
 
-@router.post("/password/request-otp", status_code=status.HTTP_200_OK)
-@limiter.limit("5/hour")
-async def password_request_otp(request: Request, payload: OTPRequest, db: AsyncSession = Depends(get_db)):
-    """Request OTP for password reset."""
-    existing = await db.execute(select(User).where(User.email == payload.email))
-    if not existing.scalars().first():
-        # Do not leak account existence, just return OK
-        return {"message": "If an account exists, an OTP has been sent."}
-        
-    await create_and_send_otp(db, payload.email)
-    return {"message": "If an account exists, an OTP has been sent."}
+        try:
+            await db.commit()
+        except Exception as e:
+            # Race condition: another request created the user in between.
+            # Roll back and treat as existing user.
+            await db.rollback()
+            logger.warning(f"Race condition creating local user {email}: {e}")
+            is_new_user = False
+    else:
+        # Existing user — check that STUDENT role exists (don't double-insert)
+        role_result = await db.execute(
+            select(UserRole).where(
+                UserRole.user_id == user_id,
+                UserRole.role == "STUDENT",
+            )
+        )
+        if not role_result.scalars().first():
+            db.add(UserRole(user_id=user_id, role="STUDENT"))
+            await db.commit()
 
-
-@router.post("/password/verify-otp", status_code=status.HTTP_200_OK)
-@limiter.limit("10/hour")
-async def password_verify_otp(request: Request, payload: OTPVerify, db: AsyncSession = Depends(get_db)):
-    """Verify OTP and get a password reset token."""
-    await verify_otp(db, payload.email, payload.token)
-    reset_token = create_temporary_token(payload.email, "password_reset", 15)
-    return {"message": "OTP verified successfully.", "reset_token": reset_token}
-
-
-@router.post("/password/reset", status_code=status.HTTP_200_OK)
-async def password_reset(payload: PasswordResetRequest, db: AsyncSession = Depends(get_db)):
-    """Reset the password using the reset token."""
-    try:
-        verified_email = verify_temporary_token(payload.reset_token, "password_reset")
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Invalid or expired reset session: {str(e)}")
-        
-    try:
-        admin_update_user_password(verified_email, payload.password)
-    except Exception as e:
-        logger.error(f"Failed to update password in Supabase: {e}")
-        raise HTTPException(status_code=500, detail="Failed to reset password")
-        
-    return {"message": "Password has been successfully updated."}
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "is_new_user": is_new_user,
+    }
